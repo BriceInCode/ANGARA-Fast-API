@@ -6,7 +6,7 @@ class ClientBase(BaseModel):
     email: Optional[EmailStr] = Field(None, description="Adresse email du client")
     phone: Optional[str] = Field(None, description="Numéro de téléphone du client")
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def check_email_or_phone(cls, values):
         if not values.get('email') and not values.get('phone'):
             raise ValueError('Au moins un des champs email ou téléphone doit être fourni')
@@ -20,4 +20,4 @@ class ClientRead(ClientBase):
     created_at: datetime = Field(..., description="Date de création du client")
 
     class Config:
-        orm_mode = True
+        from_attributes = True

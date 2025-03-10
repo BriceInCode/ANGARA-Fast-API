@@ -1,6 +1,7 @@
+# app/client/models/session.py
 from sqlalchemy import Column, Integer, Boolean, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.config.database import Base
 
 class Session(Base):
@@ -8,16 +9,16 @@ class Session(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=False)
-    is_active = Column(Boolean, default=False)  # Une seule session active à la fois
+    is_active = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, default=lambda: datetime.utcnow() + timedelta(hours=2))
 
-    # Relation avec Client (Un client peut avoir plusieurs sessions)
+    # Relation avec Client (un client peut avoir plusieurs sessions)
     client = relationship("Client", back_populates="sessions")
 
-    # Relation avec OTP (Une session a un seul OTP)
+    # Une session possède un seul OTP (cascade pour suppression)
     otp = relationship("OTP", back_populates="session", uselist=False, cascade="all, delete-orphan")
 
-    # Contrainte pour garantir qu'une seule session est active à la fois pour un client donné
-    __table_args__ = (
-        UniqueConstraint('client_id', 'is_active', name='unique_active_session_per_client'),
-    )
+    # __table_args__ = (
+    #     UniqueConstraint('client_id', 'is_active', name='unique_active_session_per_client'),
+    # )

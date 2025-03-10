@@ -11,6 +11,7 @@ class SessionRead(SessionBase):
     id: int = Field(..., description="Identifiant unique de la session")
     client_id: int = Field(..., description="Identifiant unique du client associé à la session")
     created_at: datetime = Field(..., description="Date de création de la session")
+    expires_at: datetime = Field(..., description="Date d'expiration de la session (1 heure après la création)")
 
     class Config:
-        orm_mode = True
+        from_attributes = True

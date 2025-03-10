@@ -14,4 +14,4 @@ class OTPRead(OTPBase):
     expires_at: datetime = Field(..., description="Date d'expiration de l'OTP")
 
     class Config:
-        orm_mode = True
+        from_attributes = True
