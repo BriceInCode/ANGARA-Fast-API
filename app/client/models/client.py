@@ -1,4 +1,3 @@
-# app/client/models/client.py
 from sqlalchemy import Column, Integer, String, DateTime, UniqueConstraint, CheckConstraint
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -12,7 +11,7 @@ class Client(Base):
     phone = Column(String(20), unique=True, index=True, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    # Un client peut avoir plusieurs sessions
+    # Relation : Un client peut avoir plusieurs sessions
     sessions = relationship("Session", back_populates="client", cascade="all, delete-orphan")
 
     __table_args__ = (

@@ -10,10 +10,12 @@ class EmailService:
         self.port = 465  # Port SSL
         self.sender_email = settings.GMAIL_EMAIL      # Exemple : "votre_email@gmail.com"
         self.password = settings.GMAIL_PASSWORD         # Mot de passe ou App Password
+        self.company_name = settings.GMAIL_USERNAME
 
     def send_email(self, receiver_email: str, subject: str, body: str) -> bool:
+        
         message = MIMEMultipart()
-        message["From"] = self.sender_email
+        message["From"] = self.company_name
         message["To"] = receiver_email
         message["Subject"] = subject
 

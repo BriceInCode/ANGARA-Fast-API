@@ -10,5 +10,6 @@ class Settings:
     SECRET_KEY: str = os.getenv("SECRET_KEY")
     GMAIL_EMAIL: str = os.getenv("GMAIL_EMAIL")      
     GMAIL_PASSWORD: str = os.getenv("GMAIL_PASSWORD")   
+    GMAIL_USERNAME: str = os.getenv("GMAIL_USERNAME")
 
 settings = Settings()
