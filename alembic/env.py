@@ -1,43 +1,43 @@
 from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
+from sqlalchemy import engine_from_config, pool
 from alembic import context
+from app.config.database import Base  # Assurez-vous que 'Base' contient tous vos modèles
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
+# Importation des modèles
+from app.client.models.client import Client
+from app.client.models.session import Session
+from app.client.models.otp import OTP
+from app.documents.models.demande import Demande
+from app.documents.models.DemandeHistory import DemandeHistory
+from app.documents.models.document import Document
+from app.utilisateurs.models.organisation import Organisation
+from app.utilisateurs.models.utilisateur import Utilisateur
+from app.utilisateurs.models.permission import Permission
+from app.utilisateurs.models.role import Role
+from app.utilisateurs.models.role_permissions import role_permissions
+from app.utilisateurs.models.user_permissions import user_permissions
+
+from app.utilisateurs.models.enums import organisation_type
+from app.utilisateurs.models.enums import permission_enum
+from app.utilisateurs.models.enums import role_enum
+from app.documents.models.types.gender import GenderType
+from app.documents.models.types.documents import DocumentsType
+from app.documents.models.types.raisons import RaisonsType
+from app.documents.models.types.status import StatusType
+
+
+# Object Alembic Config pour accéder aux paramètres du fichier .ini
 config = context.config
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
-if config.config_file_name is not None:
+# Configurer le logger si nécessaire
+if config.config_file_name:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = None
-
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
-
+# Utilisation des métadonnées globales de Base
+target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
-
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
-
-    Calls to context.execute() here emit the given string to the
-    script output.
-
-    """
+    """Exécuter les migrations en mode 'offline'."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
@@ -49,14 +49,8 @@ def run_migrations_offline() -> None:
     with context.begin_transaction():
         context.run_migrations()
 
-
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
-
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
-    """
+    """Exécuter les migrations en mode 'online'."""
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
@@ -64,14 +58,12 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()
 
-
+# Déterminer si nous sommes en mode 'offline' ou 'online'
 if context.is_offline_mode():
     run_migrations_offline()
 else:
