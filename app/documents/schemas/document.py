@@ -5,9 +5,9 @@ from typing import Optional
 ALLOWED_EXTENSIONS = {"pdf", "png", "jpg", "jpeg"}
 
 class DocumentBase(BaseModel):
-    request_id: int = Field(..., gt=0, description="ID de la demande associée")
+    demande_id: int = Field(..., gt=0, description="ID de la demande associée")
     file_path: str = Field(..., max_length=255, description="Chemin du fichier")
-    file_type: str = Field(..., max_length=100, description="Type du fichier (ex: pdf, png, jpg, jpeg, etc.)")
+    file_type: str = Field(..., max_length=100, description="Type du fichier (pdf, png, jpg, jpeg)")
     file_size: int = Field(..., gt=0, description="Taille du fichier en octets")
     checksum: str = Field(..., max_length=255, description="Checksum SHA-256 du fichier")
 

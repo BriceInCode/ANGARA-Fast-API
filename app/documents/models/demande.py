@@ -1,5 +1,5 @@
 # app/documents/models/request.py
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum as SAEnum
+from sqlalchemy import Column, Integer, String, DateTime, func,  ForeignKey, Enum as SAEnum
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.config.database import Base
@@ -15,7 +15,7 @@ class Demande(Base):
     session_id = Column(Integer, ForeignKey("clients_sessions.id", ondelete="CASCADE"), nullable=False)
     request_number = Column(String(22), unique=True, nullable=False)
 
-    document_type = Column(SAEnum(DocumentsType), nullable=False)
+    document_type = Column(SAEnum(DocumentsType, name="document_type_enum"), nullable=False)
     request_reason = Column(SAEnum(RaisonsType), nullable=False)
     civil_center_reference = Column(String(255), nullable=False)
     birth_act_number = Column(String(255), nullable=False)
@@ -40,7 +40,12 @@ class Demande(Base):
     mother_profession = Column(String(255), nullable=True)
 
     status = Column(SAEnum(StatusType), nullable=False, default=StatusType.EN_COURS)
+    # Ajout des timestamps
+    created_at = Column(DateTime, server_default=func.now())  # Défaut : date actuelle
+    updated_at = Column(DateTime, onupdate=func.now(), default=func.now())  # Mise à jour automatique
 
     # Relations
     session = relationship("Session", back_populates="demandes")
     document = relationship("Document", back_populates="demande", uselist=False, cascade="all, delete-orphan")
+    
+    

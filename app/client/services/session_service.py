@@ -162,3 +162,21 @@ class SessionService:
             "message": "Session activée avec succès",
             "data": {"session": db_session, "token": token}
         }
+
+
+    def get_sessions_by_client(self, client_id: int) -> dict:
+        """
+        Récupère toutes les sessions associées au client spécifié et les segmente en sessions actives et inactives.
+        """
+        all_sessions = self.db.query(SessionModel).filter(SessionModel.client_id == client_id).all()
+        active_sessions = [session for session in all_sessions if session.is_active]
+        inactive_sessions = [session for session in all_sessions if not session.is_active]
+        
+        return {
+            "code": 200,
+            "message": "Sessions récupérées avec succès",
+            "data": {
+                "active_sessions": active_sessions,
+                "inactive_sessions": inactive_sessions
+            }
+        }

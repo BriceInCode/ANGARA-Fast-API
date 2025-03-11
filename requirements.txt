@@ -9,3 +9,5 @@ pydantic[email]
 pymysql
 PyJWT
 fastapi-mail
+python-multipart
+alembic

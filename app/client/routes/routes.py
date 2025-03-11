@@ -66,6 +66,15 @@ def get_all_clients(token: dict = Depends(verify_token), db: Session = Depends(g
     result = service.get_all_clients()
     return result
 
+@router.get("/clients/{client_id}/sessions", tags=["Sessions-Clients"], summary="Récupérer toutes les sessions d'un client (actives/inactives)")
+def get_sessions_by_client(client_id: int, token: dict = Depends(verify_token), db: Session = Depends(get_db)):
+    """
+    Récupère toutes les sessions d'un client donné, séparées en sessions actives et inactives.
+    """
+    service = SessionService(db)
+    result = service.get_sessions_by_client(client_id)
+    return result
+
 @router.delete("/clients/{client_id}", tags=["Clients"], summary="Supprimer un client")
 def delete_client(client_id: int, token: dict = Depends(verify_token), db: Session = Depends(get_db)):
     service = ClientService(db)

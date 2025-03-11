@@ -11,5 +11,6 @@ class Settings:
     GMAIL_EMAIL: str = os.getenv("GMAIL_EMAIL")      
     GMAIL_PASSWORD: str = os.getenv("GMAIL_PASSWORD")   
     GMAIL_USERNAME: str = os.getenv("GMAIL_USERNAME")
+    DOCUMENTS_STORAGE_PATH: str = os.getenv("DOCUMENTS_STORAGE_PATH")
 
 settings = Settings()

@@ -1,4 +1,3 @@
-# app/documents/schemas/demande.py
 from pydantic import BaseModel, Field, root_validator
 from datetime import datetime, date
 from typing import Optional
@@ -6,10 +5,11 @@ from app.documents.models.types.gender import GenderType
 from app.documents.models.types.documents import DocumentsType
 from app.documents.models.types.raisons import RaisonsType
 from app.documents.models.types.status import StatusType
+from app.documents.schemas.document import DocumentRead  # Importer le schéma du document
 
 class DemandeBase(BaseModel):
     session_id: int = Field(..., gt=0, description="ID de la session associée")
-    request_number: str = Field(..., min_length=15, max_length=22, description="Numéro unique de la demande (15 à 22 caractères)")
+    request_number: Optional[str] = Field(None, min_length=15, max_length=22, description="Numéro unique de la demande (15 à 22 caractères)")
     document_type: DocumentsType = Field(..., description="Type de document demandé")
     request_reason: RaisonsType = Field(..., description="Raison de la demande")
     civil_center_reference: str = Field(..., max_length=255, description="Référence du centre civil")
@@ -51,7 +51,7 @@ class DemandeRead(DemandeBase):
     id: int = Field(..., description="Identifiant unique de la demande")
     created_at: datetime = Field(..., description="Date de création de la demande")
     updated_at: datetime = Field(..., description="Date de mise à jour de la demande")
-    document: Optional["DemandeBase"]
+    document: Optional[DocumentRead]  # Correction ici : utiliser DocumentRead et non DemandeBase
 
     class Config:
         from_attributes = True

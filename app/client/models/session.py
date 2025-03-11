@@ -17,6 +17,8 @@ class Session(Base):
 
     # Une session possède un seul OTP (cascade pour suppression)
     otp = relationship("OTP", back_populates="session", uselist=False, cascade="all, delete-orphan")
+    
+    demandes = relationship("Demande", back_populates="session")
 
     # __table_args__ = (
     #     UniqueConstraint('client_id', 'is_active', name='unique_active_session_per_client'),
