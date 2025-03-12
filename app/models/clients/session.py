@@ -13,4 +13,3 @@ class Session(Base):
     expires_at = Column(DateTime, default=lambda: datetime.utcnow() + timedelta(hours=2), index=True)
     client = relationship("Client", back_populates="sessions")
     otp = relationship("OTP", back_populates="session", uselist=False, cascade="all, delete-orphan")
-    demandes = relationship("Demande", back_populates="session")

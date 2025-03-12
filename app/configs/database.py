@@ -1,9 +1,13 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from app.configs import settings
+from app.configs.settings import settings
 
-# Adapter l'URL de connexion pour utiliser PyMySQL
+# Vérifier si DATABASE_URL est bien chargé
+if not settings.DATABASE_URL:
+    raise ValueError("❌ DATABASE_URL n'est pas défini dans le fichier .env ! Vérifiez le chargement du fichier .env.")
+
+# Adapter l'URL de connexion pour PyMySQL
 DATABASE_URL = settings.DATABASE_URL.replace("mysql://", "mysql+pymysql://")
 
 # Création de l'engine SQLAlchemy
@@ -23,6 +27,6 @@ def get_db():
     finally:
         db.close()
 
-# Initialisation de la base de données (création automatique des tables)
+# Initialisation de la base de données
 def init_db():
     Base.metadata.create_all(bind=engine)
