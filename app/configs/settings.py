@@ -12,6 +12,8 @@ class Settings:
     GMAIL_PASSWORD: str = os.getenv("GMAIL_PASSWORD")
     GMAIL_USERNAME: str = os.getenv("GMAIL_USERNAME")
     DOCUMENTS_STORAGE_PATH: str = os.getenv("DOCUMENTS_STORAGE_PATH")
+    ACCESS_TOKEN_EXPIRE_MINUTES: str = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
+    ALGORITHM: str = os.getenv("ALGORITHM")
 
     def check_config(self):
         print("✅ Configuration chargée :")

@@ -5,6 +5,9 @@ from app.configs.enumerations.Persmissions import PermissionEnum
 class PermissionBase(BaseModel):
     nom: PermissionEnum = Field(..., description="Nom de la permission")
 
+    class Config:
+        orm_mode = True  # This is necessary for compatibility with SQLAlchemy models
+
 class PermissionCreate(PermissionBase):
     """
     Schéma utilisé lors de la création d'une permission.
@@ -18,3 +21,4 @@ class PermissionRead(PermissionBase):
 
     class Config:
         from_attributes = True
+

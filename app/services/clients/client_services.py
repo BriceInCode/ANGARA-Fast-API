@@ -38,12 +38,11 @@ class ClientService:
             data = session_response.get("data")
             serialized_client = self._serialize_model(data.get("client"))
             serialized_session = self._serialize_model(data.get("session"))
-            token = data.get("token", None)
 
             return {
                 "code": 201,
                 "message": message,
-                "data": {"client": serialized_client, "session": serialized_session, "token": token},
+                "data": {"client": serialized_client, "session": serialized_session},
             }
         except Exception as e:
             self.db.rollback()

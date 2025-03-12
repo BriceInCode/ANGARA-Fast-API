@@ -8,7 +8,7 @@ class Organisation(Base):
     __tablename__ = "organisations"
 
     id = Column(Integer, primary_key=True, index=True)
-    nom = Column(SQLAlchemyEnum(OrganisationEnum), nullable=False)
+    nom = Column(SQLAlchemyEnum(OrganisationEnum), nullable=False, unique=True)
     reference = Column(String(36), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)

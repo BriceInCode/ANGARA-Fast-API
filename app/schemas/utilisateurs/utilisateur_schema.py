@@ -2,17 +2,17 @@ from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime
 from typing import Optional, List
 from app.configs.enumerations.Comptes import ComptesEnum
-from role_schema import RoleRead
-from organisation_schema import OrganisationRead
-from centre_etat_civil_schema import CentreEtatCivilRead
-from permission_schema import PermissionRead
+from app.schemas.organisations.centre_etat_civil_schema import CentreEtatCivilRead
+from app.schemas.organisations.organisation_schema import OrganisationRead
+from app.schemas.utilisateurs.permission_schema import PermissionRead
+from app.schemas.utilisateurs.role_schema import RoleRead
 
 class UtilisateurBase(BaseModel):
     nom: str = Field(..., description="Nom de l'utilisateur")
     prenom: str = Field(..., description="Prénom de l'utilisateur")
     email: EmailStr = Field(..., description="Adresse email de l'utilisateur")
-    mot_de_passe: str = Field(..., description="Mot de passe de l'utilisateur")
-    status: ComptesEnum = Field(default=ComptesEnum.INACTIF, description="Statut du compte utilisateur")
+    # mot_de_passe: str = Field(..., description="Mot de passe de l'utilisateur")
+    status: ComptesEnum = Field(default=ComptesEnum.ACTIF, description="Statut du compte utilisateur")
 
 class UtilisateurCreate(UtilisateurBase):
     role_id: int = Field(..., description="Identifiant du rôle associé à l'utilisateur")

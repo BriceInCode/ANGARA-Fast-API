@@ -10,7 +10,7 @@ class CentreEtatCivil(Base):
     nom = Column(String(255), nullable=False, unique=True)
     adresse = Column(String(255), nullable=True)
     email = Column(String(255), nullable=True, unique=True)
-    telephone = Column(String(20), nullable=True)
+    telephone = Column(String(20), nullable=True, unique=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
 

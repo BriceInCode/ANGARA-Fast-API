@@ -1,34 +1,20 @@
-from sqlalchemy import Column, Integer, DateTime, ForeignKey, Table
+from sqlalchemy import Column, Integer, DateTime, ForeignKey, String
 from sqlalchemy import Enum as SQLAlchemyEnum
-from sqlalchemy.orm import relationship
-from datetime import datetime
-from app.configs.database import Base
 from app.configs.enumerations.Roles import RoleEnum
-
-
-role_permissions = Table(
-    "role_permissions",
-    Base.metadata,
-    Column("role_id", Integer, ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True),
-    Column("permission_id", Integer, ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True),
-)
-
-user_permissions = Table(
-    "user_permissions",
-    Base.metadata,
-    Column("user_id", Integer, ForeignKey("utilisateurs.id", ondelete="CASCADE"), primary_key=True),
-    Column("permission_id", Integer, ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True),
-)
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from app.configs.database import Base
 
 class Role(Base):
     __tablename__ = "roles"
 
     id = Column(Integer, primary_key=True, index=True)
     nom = Column(SQLAlchemyEnum(RoleEnum), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    permissions = relationship("Permission", secondary=role_permissions, back_populates="roles")
-    utilisateurs = relationship("Utilisateur", back_populates="role")
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    permissions = relationship("Permission", secondary="role_permissions", back_populates="roles", cascade="all, delete")
+    utilisateurs = relationship("Utilisateur", back_populates="role", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Role {self.nom}>"
