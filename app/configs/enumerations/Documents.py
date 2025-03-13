@@ -1,9 +1,9 @@
 from enum import Enum as PyEnum
 
 class DocumentEnum(PyEnum):
-    ACTE_DE_NAISSANCE = "ACTE_DE_NAISSANCE"
-    ACTE_DE_MARIAGE = "ACTE_DE_MARIAGE"
-    ACTE_DE_DECES = "ACTE_DE_DECES"
-    CERTIFICAT_DE_NATIONALITE = "CERTIFICAT_DE_NATIONALITE"
-    EXTRAIT_DU_CASIER_JUDICIAIRE = "EXTRAIT_DU_CASIER_JUDICIAIRE"
-    EXTRAIT_DU_PLUMITIF = "EXTRAIT_DU_PLUMITIF"
+    ACTE_NAISSANCE = "Acte de naissance"
+    ACTE_MARIAGE = "Acte de mariage"
+    ACTE_DECES = "Acte de décès"
+    CERTIFICAT_NATIONALITE = "Certificat de nationalité"
+    CASIER_JUDICIAIRE = "Extrait du casier judiciaire"
+    PLUMITIF = "Extrait du plumitif"

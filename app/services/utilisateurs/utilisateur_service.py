@@ -4,6 +4,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from sqlalchemy.exc import IntegrityError
+
 from app.configs.enumerations.Comptes import ComptesEnum
 from app.configs.utils.email_service import EmailService
 from app.models.organisations.centre_etat_civil import CentreEtatCivil
@@ -20,169 +21,171 @@ class UtilisateurService:
     def __init__(self, db: Session):
         self.db = db
         self.email_service = EmailService()
-        
+
     @staticmethod
     def generate_password(length=10):
         """Génère un mot de passe aléatoire"""
         characters = string.ascii_letters + string.digits + string.punctuation
-        return ''.join(random.choice(characters) for i in range(length))
+        return ''.join(random.choice(characters) for _ in range(length))
 
     @staticmethod
     def hash_password(password: str):
         """Hash le mot de passe généré"""
         return pwd_context.hash(password)
 
-    @staticmethod
-    def send_welcome_email(email: str, role_name: str, mot_de_passe: str):
+    def send_welcome_email(self, email, role_nom, mot_de_passe):
         """Envoie un email de bienvenue avec le mot de passe et le rôle"""
-        # Déterminer si c'est le matin ou le soir
         current_hour = datetime.now().hour
         salutation = "Bonjour" if current_hour < 18 else "Bonsoir"
-        
-        # Construire le contenu du message
         subject = "Compte utilisateur créé"
         body = (
-            f"{salutation} Ms/Mme/Mlle...,\n\n"
-            f"Nous vous informons qu'un compte utilisateur vous a été créé en tant que {role_name}.\n\n"
+            f"Nous vous informons qu'un compte utilisateur vous a été créé en tant que {role_nom}.\n\n"
             f"Votre mot de passe est le suivant : {mot_de_passe}\n\n"
-            "Veuillez le garder en sécurité et le changer dès que possible. \n\n\n"
-            "ANGARA AUTHENTIC. \n\n "
         )
-        return EmailService().send_email(email, subject, body)
+        return self.email_service.send_email(email, subject, body)
 
-    @staticmethod
-    def create_utilisateur(db: Session, utilisateur_data: UtilisateurCreate):
+    def create_utilisateur(self, utilisateur_data: UtilisateurCreate):
         try:
             # Vérifier si l'email est déjà utilisé
-            if db.query(Utilisateur).filter(Utilisateur.email == utilisateur_data.email).first():
+            if self.db.query(Utilisateur).filter(Utilisateur.email == utilisateur_data.email).first():
                 return {"code": 409, "message": "L'email est déjà utilisé.", "data": None}
 
-            # Vérifier si le rôle et l'organisation existent
-            role = db.query(Role).filter(Role.id == utilisateur_data.role_id).first()
+            # Vérifier l'existence du rôle et de l'organisation
+            role = self.db.query(Role).filter(Role.id == utilisateur_data.role_id).first()
             if not role:
                 return {"code": 404, "message": "Rôle non trouvé", "data": None}
 
-            organisation = db.query(Organisation).filter(Organisation.id == utilisateur_data.organisation_id).first()
+            organisation = self.db.query(Organisation).filter(Organisation.id == utilisateur_data.organisation_id).first()
             if not organisation:
                 return {"code": 404, "message": "Organisation non trouvée", "data": None}
 
-            # Générer un mot de passe aléatoire pour l'utilisateur
-            mot_de_passe = UtilisateurService.generate_password()
+            # Générer un mot de passe aléatoire et le hacher
+            mot_de_passe = self.generate_password()
+            hashed_password = self.hash_password(mot_de_passe)
 
-            # Hacher le mot de passe avant de l'affecter à l'utilisateur
-            hashed_password = UtilisateurService.hash_password(mot_de_passe)
-
-            # Créer l'utilisateur, en s'assurant que le statut est ACTIF par défaut
-            utilisateur_data.status = ComptesEnum.ACTIF  # S'assurer que le statut est ACTIF si non spécifié
+            # S'assurer que le statut est ACTIF par défaut
+            utilisateur_data.status = ComptesEnum.ACTIF
             new_utilisateur = Utilisateur(**utilisateur_data.dict(), mot_de_passe=hashed_password)
-            db.add(new_utilisateur)
-            db.commit()
-            db.refresh(new_utilisateur)
+            self.db.add(new_utilisateur)
+            self.db.commit()
+            self.db.refresh(new_utilisateur)
 
-            # Envoyer l'email de bienvenue avec le mot de passe et le rôle
-            success = UtilisateurService.send_welcome_email(utilisateur_data.email, role.nom, mot_de_passe)
+            # Remplacer RoleEnum par son équivalent lisible
+            role_nom = role.nom.value  # Utiliser le nom du rôle dans la base de données (en supposant qu'il est déjà défini)
+
+            # Envoyer l'email de bienvenue
+            success = self.send_welcome_email(utilisateur_data.email, role_nom, mot_de_passe)
             message = "Utilisateur créé avec succès, email envoyé" if success else "Utilisateur créé avec succès, mais l'email n'a pas pu être envoyé"
-
             return {"code": 201, "message": message, "data": UtilisateurRead.from_orm(new_utilisateur)}
+        
         except IntegrityError as e:
-            db.rollback()
+            self.db.rollback()
             return {"code": 500, "message": f"Erreur d'intégrité lors de la création de l'utilisateur: {str(e)}", "data": None}
         except Exception as e:
-            db.rollback()
+            self.db.rollback()
             return {"code": 500, "message": f"Erreur inattendue: {str(e)}", "data": None}
-
-    @staticmethod
-    def get_utilisateur(db: Session, param: str):
-        # Vérifier si le paramètre est un ID (un entier) ou un email
+        
+        
+    @classmethod
+    def get_utilisateur(cls, db: Session, param: str):
         utilisateur = None
-        if param.isdigit():  # Si le paramètre est un ID (c'est-à-dire un nombre entier)
-            utilisateur = db.query(Utilisateur).filter(Utilisateur.id == int(param)).first()
-        else:  # Si le paramètre est un email (string)
-            utilisateur = db.query(Utilisateur).filter(Utilisateur.email == param).first()
 
+        if param.isdigit():
+            utilisateur = db.query(Utilisateur).filter(Utilisateur.id == int(param)).first()
+        else:
+            utilisateur = db.query(Utilisateur).filter(Utilisateur.email == param).first()
         if utilisateur:
             return {"code": 200, "message": "Utilisateur trouvé", "data": UtilisateurRead.from_orm(utilisateur)}
         return {"code": 404, "message": "Utilisateur non trouvé", "data": None}
 
 
-    @staticmethod
-    def get_all_utilisateurs(db: Session):
-        utilisateurs = db.query(Utilisateur).all()
+    def get_all_utilisateurs(self):
+        utilisateurs = self.db.query(Utilisateur).all()
         return {"code": 200, "message": "Liste des utilisateurs récupérée", "data": [UtilisateurRead.from_orm(u) for u in utilisateurs]}
 
     @staticmethod
     def get_utilisateurs_by_role(db: Session, role: str):
-        # Vérifier si le paramètre est un entier (id du rôle) ou une chaîne (nom du rôle)
-        if isinstance(role, int):
-            # Si le paramètre est un entier, c'est l'ID du rôle
-            utilisateurs = db.query(Utilisateur).filter(Utilisateur.role_id == role).all()
-        else:
-            # Si le paramètre est une chaîne, c'est le nom du rôle
-            role_obj = db.query(Role).filter(Role.id == role).first()
-            if role_obj:
-                utilisateurs = db.query(Utilisateur).filter(Utilisateur.role_id == role_obj.id).all()
-            else:
-                return {"code": 404, "message": "Rôle non trouvé", "data": None}
+        # Tenter de convertir `role` en entier pour vérifier si c'est un ID
+        try:
+            role_id = int(role)  # Si `role` est un ID, cela va passer
+            role_obj = db.query(Role).filter(Role.id == role_id).first()
+        except ValueError:
+            # Si la conversion échoue, c'est probablement un nom de rôle
+            role_obj = db.query(Role).filter(Role.nom == role).first()
         
-        if utilisateurs:
-            return {"code": 200, "message": "Utilisateurs trouvés", "data": [UtilisateurRead.from_orm(utilisateur) for utilisateur in utilisateurs]}
-        return {"code": 404, "message": "Aucun utilisateur trouvé pour ce rôle", "data": None}
+        if role_obj:
+            utilisateurs = db.query(Utilisateur).filter(Utilisateur.role_id == role_obj.id).all()
+            return {"code": 200, "message": "Utilisateurs trouvés", "data": utilisateurs}
+        
+        return {"code": 404, "message": "Role non trouvé", "data": None}
 
     @staticmethod
     def get_utilisateurs_by_organisation(db: Session, organisation: str):
-        # Vérifier si le paramètre est un entier (id de l'organisation), une chaîne (nom ou référence)
-        if isinstance(organisation, int):
-            # Si le paramètre est un entier, c'est l'ID de l'organisation
-            utilisateurs = db.query(Utilisateur).filter(Utilisateur.organisation_id == organisation).all()
-        else:
-            # Si le paramètre est une chaîne, il peut être soit le nom, soit la référence de l'organisation
-            organisation_obj = db.query(Organisation).filter(
+        """
+        Retourne les utilisateurs par organisation.
+        Le paramètre peut être l'ID (int), le nom ou la référence (str).
+        """
+        # Vérification si l'organisation est un ID (entier)
+        try:
+            organisation_id = int(organisation)  # Tentative de conversion en entier
+            utilisateurs = db.query(Utilisateur).filter(Utilisateur.organisation_id == organisation_id).all()
+        except ValueError:  # Si l'organisation n'est pas un entier, on recherche par nom ou référence
+            # Recherche de l'organisation par nom ou référence
+            org_obj = db.query(Organisation).filter(
                 (Organisation.nom == organisation) | (Organisation.reference == organisation)
             ).first()
 
-            if organisation_obj:
-                utilisateurs = db.query(Utilisateur).filter(Utilisateur.organisation_id == organisation_obj.id).all()
+            if org_obj:
+                utilisateurs = db.query(Utilisateur).filter(Utilisateur.organisation_id == org_obj.id).all()
             else:
                 return {"code": 404, "message": "Organisation non trouvée", "data": None}
-        
+
+        # Si des utilisateurs ont été trouvés, on les retourne, sinon un message d'erreur
         if utilisateurs:
-            return {"code": 200, "message": "Utilisateurs trouvés", "data": [UtilisateurRead.from_orm(utilisateur) for utilisateur in utilisateurs]}
+            return {"code": 200, "message": "Utilisateurs trouvés", "data": [UtilisateurRead.from_orm(u) for u in utilisateurs]}
         return {"code": 404, "message": "Aucun utilisateur trouvé pour cette organisation", "data": None}
 
     @staticmethod
-    def get_utilisateurs_by_centre(db: Session, centre: str):
-        # Vérifier si le paramètre est un entier (id du centre), ou une chaîne (référence, nom, email, téléphone)
+    def get_utilisateurs_by_centre(db: Session, centre):
+        """
+        Retourne les utilisateurs par centre d'état civil.
+        Le paramètre peut être l'ID (int) ou une valeur de référence, nom, email ou téléphone (str).
+        """
         if isinstance(centre, int):
-            # Si le paramètre est un entier, c'est l'ID du centre
+            # Recherche par ID du centre
             utilisateurs = db.query(Utilisateur).filter(Utilisateur.centre_id == centre).all()
         else:
-            # Si le paramètre est une chaîne, il peut être la référence, le nom, l'email ou le téléphone du centre
+            # Recherche par référence, nom, email ou téléphone
             centre_obj = db.query(CentreEtatCivil).filter(
-                (CentreEtatCivil.id == centre) |  # Recherche par ID
-                (CentreEtatCivil.reference == centre) | 
-                (CentreEtatCivil.nom == centre) | 
-                (CentreEtatCivil.email == centre) | 
+                (CentreEtatCivil.id == centre) |
+                (CentreEtatCivil.reference == centre) |
+                (CentreEtatCivil.nom == centre) |
+                (CentreEtatCivil.email == centre) |
                 (CentreEtatCivil.telephone == centre)
             ).first()
 
             if centre_obj:
+                # Recherche des utilisateurs pour ce centre
                 utilisateurs = db.query(Utilisateur).filter(Utilisateur.centre_id == centre_obj.id).all()
             else:
                 return {"code": 404, "message": "Centre d'état civil non trouvé", "data": None}
-        
+
         if utilisateurs:
-            return {"code": 200, "message": "Utilisateurs trouvés", "data": [UtilisateurRead.from_orm(utilisateur) for utilisateur in utilisateurs]}
+            # Retourne les utilisateurs trouvés sous forme de données lisibles
+            return {"code": 200, "message": "Utilisateurs trouvés", "data": [UtilisateurRead.from_orm(u) for u in utilisateurs]}
+        
         return {"code": 404, "message": "Aucun utilisateur trouvé pour ce centre d'état civil", "data": None}
+
 
 
     @staticmethod
     def update_utilisateur(db: Session, utilisateur_id: int, updates: dict):
+        # Utilisation de db sans self
         utilisateur = db.query(Utilisateur).filter(Utilisateur.id == utilisateur_id).first()
         if not utilisateur:
             return {"code": 404, "message": "Utilisateur non trouvé", "data": None}
         
         try:
-            # Vérifier si le rôle et l'organisation existent
             if 'role_id' in updates:
                 role = db.query(Role).filter(Role.id == updates['role_id']).first()
                 if not role:
@@ -194,19 +197,11 @@ class UtilisateurService:
                 if not organisation:
                     return {"code": 404, "message": "Organisation non trouvée", "data": None}
                 utilisateur.organisation_id = updates['organisation_id']
-            
-            # Si un centre d'état civil est renseigné, vérifier s'il existe
-            if 'centre_id' in updates:
-                centre = db.query(CentreEtatCivil).filter(CentreEtatCivil.id == updates['centre_id']).first()
-                if not centre:
-                    return {"code": 404, "message": "Centre d'état civil non trouvé", "data": None}
-                utilisateur.centre_id = updates['centre_id']
-            
-            # Appliquer les autres mises à jour
+
             for key, value in updates.items():
-                if key not in ['role_id', 'organisation_id', 'centre_id']:  # Ces champs sont déjà traités
+                if key not in ['role_id', 'organisation_id', 'centre_id']:
                     setattr(utilisateur, key, value)
-            
+
             db.commit()
             db.refresh(utilisateur)
             return {"code": 200, "message": "Utilisateur mis à jour", "data": UtilisateurRead.from_orm(utilisateur)}
@@ -214,11 +209,10 @@ class UtilisateurService:
         except IntegrityError as e:
             db.rollback()
             return {"code": 500, "message": f"Erreur d'intégrité lors de la mise à jour: {str(e)}", "data": None}
+        
         except Exception as e:
             db.rollback()
             return {"code": 500, "message": f"Erreur inattendue: {str(e)}", "data": None}
-
-
     @staticmethod
     def delete_utilisateur(db: Session, utilisateur_id: int):
         utilisateur = db.query(Utilisateur).filter(Utilisateur.id == utilisateur_id).first()
@@ -237,88 +231,62 @@ class UtilisateurService:
 
     @staticmethod
     def assign_user_to_organisation(db: Session, assigner_id: int, utilisateur_id: int, organisation_id: int):
-        """Affecter un utilisateur à une organisation, en prenant en compte l'utilisateur assignant et l'utilisateur affecté"""
-        
-        # Vérifier si l'utilisateur qui effectue l'affectation existe
+        # Recherche de l'utilisateur assignant
         assigner = db.query(Utilisateur).filter(Utilisateur.id == assigner_id).first()
         if not assigner:
             return {"code": 404, "message": "Utilisateur assignant non trouvé", "data": None}
-        
-        # Vérifier si l'utilisateur à affecter existe
+
+        # Recherche de l'utilisateur à affecter
         utilisateur = db.query(Utilisateur).filter(Utilisateur.id == utilisateur_id).first()
         if not utilisateur:
             return {"code": 404, "message": "Utilisateur à affecter non trouvé", "data": None}
-        
-        # Vérifier si l'organisation existe
+
+        # Recherche de l'organisation
         organisation = db.query(Organisation).filter(Organisation.id == organisation_id).first()
         if not organisation:
             return {"code": 404, "message": "Organisation non trouvée", "data": None}
-        
-        # Affecter l'organisation à l'utilisateur
+
+        # Mise à jour de l'utilisateur
         utilisateur.organisation_id = organisation.id
-        utilisateur.organisation_affecte_par_id = assigner.id  # Enregistrer l'utilisateur assignant
-        utilisateur.date_affectation_organisation = datetime.now()  # Enregistrer la date d'affectation
+        utilisateur.organisation_affecte_par_id = assigner.id
+        utilisateur.date_affectation_organisation = datetime.now()
+        
+        # Enregistrement dans la base de données
         db.commit()
         db.refresh(utilisateur)
 
         return {"code": 200, "message": "Utilisateur affecté à l'organisation", "data": UtilisateurRead.from_orm(utilisateur)}
 
-
     @staticmethod
     def assign_user_to_centre(db: Session, assigner_id: int, utilisateur_id: int, centre_id: int):
-        """Affecter un utilisateur à un centre, en prenant en compte l'utilisateur assignant et l'utilisateur affecté"""
-        
-        # Vérifier si l'utilisateur qui effectue l'affectation existe
+        # Trouver l'utilisateur qui effectue l'assignation
         assigner = db.query(Utilisateur).filter(Utilisateur.id == assigner_id).first()
         if not assigner:
-            return {"code": 404, "message": "Utilisateur assignant non trouvé", "data": None}
-        
-        # Vérifier si l'utilisateur à affecter existe
+            return {"code": 404, "message": f"L'utilisateur assignant avec l'ID {assigner_id} n'a pas été trouvé dans votre organisation. Veuillez vérifier les informations fournies.", "data": None}
+        # Trouver l'utilisateur à assigner
         utilisateur = db.query(Utilisateur).filter(Utilisateur.id == utilisateur_id).first()
         if not utilisateur:
-            return {"code": 404, "message": "Utilisateur à affecter non trouvé", "data": None}
-        
-        # Vérifier si le centre existe
+            return {"code": 404, "message": f"L'utilisateur à affecter avec l'ID {utilisateur_id} n'a pas été trouvé dans votre organisation. Merci de vérifier son identité.", "data": None}
+        # Trouver le centre
         centre = db.query(CentreEtatCivil).filter(CentreEtatCivil.id == centre_id).first()
         if not centre:
-            return {"code": 404, "message": "Centre non trouvé", "data": None}
-        
-        # Affecter le centre à l'utilisateur
-        utilisateur.centre_id = centre.id
-        utilisateur.centre_affecte_par_id = assigner.id  # Enregistrer l'utilisateur assignant
-        utilisateur.date_affectation_centre = datetime.now()  # Enregistrer la date d'affectation
+            return {"code": 404, "message": f"Le centre d'état civil avec l'ID {centre_id} n'existe pas dans la base de données de votre organisation. Veuillez vérifier les informations du centre.", "data": None}
+        # Effectuer l'assignation
+        utilisateur.centre_id = centre_id
         db.commit()
-        db.refresh(utilisateur)
-
-        return {"code": 200, "message": "Utilisateur affecté au centre", "data": UtilisateurRead.from_orm(utilisateur)}
+        # Retourner directement l'entité utilisateur après l'assignation
+        return {"code": 200, "message": f"L'utilisateur {utilisateur.nom} a été affecté avec succès au centre {centre.nom}.", "data": UtilisateurRead.from_orm(utilisateur)}
 
     @staticmethod
     def assign_permissions_to_user(db: Session, assigner_id: int, utilisateur_id: int, permissions: list):
-        """
-        Assigner des permissions à un utilisateur.
-        
-        :param db: Session SQLAlchemy
-        :param assigner_id: ID de l'utilisateur qui effectue l'assignation
-        :param utilisateur_id: ID de l'utilisateur auquel on assigne les permissions
-        :param permissions: Liste des permissions à attribuer
-        :return: Dictionnaire avec code de statut et message
-        """
-        
-        # Vérifier si l'utilisateur assignant existe
         assigner = db.query(Utilisateur).filter(Utilisateur.id == assigner_id).first()
         if not assigner:
             return {"code": 404, "message": "Utilisateur assignant non trouvé", "data": None}
-
-        # Vérifier si l'utilisateur à affecter existe
+        
         utilisateur = db.query(Utilisateur).filter(Utilisateur.id == utilisateur_id).first()
         if not utilisateur:
             return {"code": 404, "message": "Utilisateur à affecter non trouvé", "data": None}
 
-        # Vérifier si l'utilisateur assignant a les droits nécessaires
-        # if assigner.role.nom not in ['SUPER_ADMINISTRATEUR', 'ADMINISTRATEUR']:
-        #     return {"code": 403, "message": "L'utilisateur assignant n'a pas les droits nécessaires pour assigner des permissions", "data": None}
-
-        # Vérifier si les permissions existent et ajouter
         for perm_id in permissions:
             permission = db.query(Permission).filter(Permission.id == perm_id).first()
             if permission:
@@ -337,3 +305,46 @@ class UtilisateurService:
         except Exception as e:
             db.rollback()
             return {"code": 500, "message": f"Erreur inattendue lors de l'assignation des permissions: {str(e)}", "data": None}
+    
+    @staticmethod
+    def change_role(db: Session, utilisateur_id: int, new_role_id: int):
+        """
+        Change le rôle d'un utilisateur.
+        Vérifie que l'utilisateur et le nouveau rôle existent, met à jour et retourne l'utilisateur modifié.
+        """
+        utilisateur = db.query(Utilisateur).filter(Utilisateur.id == utilisateur_id).first()
+        if not utilisateur:
+            return {"code": 404, "message": "Utilisateur non trouvé", "data": None}
+        
+        role = db.query(Role).filter(Role.id == new_role_id).first()
+        if not role:
+            return {"code": 404, "message": "Rôle non trouvé", "data": None}
+
+        utilisateur.role_id = new_role_id
+        try:
+            db.commit()
+            db.refresh(utilisateur)
+            return {"code": 200, "message": "Rôle mis à jour avec succès", "data": UtilisateurRead.from_orm(utilisateur)}
+        except IntegrityError as e:
+            db.rollback()
+            return {"code": 500, "message": f"Erreur d'intégrité lors de la mise à jour du rôle: {str(e)}", "data": None}
+        except Exception as e:
+            db.rollback()
+            return {"code": 500, "message": f"Erreur inattendue: {str(e)}", "data": None}
+
+    def remove_utilisateur_from_centre(self, utilisateur_id: int):
+        utilisateur = self.db.query(Utilisateur).filter(Utilisateur.id == utilisateur_id).first()
+        if not utilisateur:
+            return {"code": 404, "message": "Utilisateur non trouvé", "data": None}
+        try:
+            # Retirer l'utilisateur de son centre
+            utilisateur.centre_id = None
+            self.db.commit()
+            self.db.refresh(utilisateur)
+            # Convertir en dict et supprimer la clé non sérialisable
+            utilisateur_data = utilisateur.__dict__.copy()
+            utilisateur_data.pop('_sa_instance_state', None)
+            return {"code": 200, "message": "Utilisateur retiré de son centre d'état civil", "data": utilisateur_data}
+        except Exception as e:
+            self.db.rollback()
+            return {"code": 500, "message": f"Erreur lors du retrait de l'utilisateur de son centre d'état civil: {str(e)}", "data": None}

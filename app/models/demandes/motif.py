@@ -9,6 +9,8 @@ class Motif(Base):
     motif = Column(SQLAlchemyEnum(MotifEnum), nullable=False)
     description = Column(Text, nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    
 
     def __repr__(self):
+        
         return f"<Motif {self.id} - {self.motif.value}>"

@@ -1,7 +1,7 @@
 from enum import Enum as PyEnum
 
-class RoleEnum(PyEnum):
-    SUPER_ADMINISTRATEUR = "SUPER_ADMINISTRATEUR"
-    ADMINISTRATEUR = "ADMINISTRATEUR"
-    AGENT = "AGENT"
-    OPERATEUR_SUR_SITE = "OPERATEUR_SUR_SITE"
+class RoleEnum(str , PyEnum):
+    SUPER_ADMINISTRATEUR = "Super Administrateur"
+    ADMINISTRATEUR = "Administrateur"
+    AGENT = "Agent"
+    OPERATEUR_SUR_SITE = "Opérateur sur site"

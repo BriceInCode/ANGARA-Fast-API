@@ -1,11 +1,13 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Optional
+from app.configs.enumerations.Persmissions import PermissionEnum
 from app.configs.enumerations.Roles import RoleEnum
 from app.schemas.utilisateurs.permission_schema import PermissionRead
 
 class RoleBase(BaseModel):
     nom: RoleEnum = Field(..., description="Nom du rôle")
+    permissions: list[PermissionEnum]
 
 class RoleCreate(RoleBase):
     """

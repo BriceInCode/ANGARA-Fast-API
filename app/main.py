@@ -57,14 +57,14 @@ app.add_middleware(
 )
 
 # Inclusion des routes
-app.include_router(client_router)
-app.include_router(session_router)
-app.include_router(otp_router)
-app.include_router(organisation_router)
-app.include_router(centre_etat_civil_router)
-app.include_router(auth_router)  # Inclusion des routes d'authentification
-app.include_router(role_router)  # Inclusion des routes pour les rôles
-app.include_router(permission_router)  # Inclusion des routes pour les permissions
+# app.include_router(client_router)
+# app.include_router(session_router)
+# app.include_router(otp_router)
+# app.include_router(organisation_router)
+# app.include_router(centre_etat_civil_router)
+# app.include_router(auth_router)  # Inclusion des routes d'authentification
+# app.include_router(role_router)  # Inclusion des routes pour les rôles
+# app.include_router(permission_router)  # Inclusion des routes pour les permissions
 app.include_router(utilisateur_router)  # Inclusion des routes pour les utilisateurs
 
 # Endpoint racine
