@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, UniqueConstraint, Chec
 from datetime import datetime
 from app.configs.database import Base
 from sqlalchemy.orm import relationship
-from app.models.demandes.demandes import Demande
+from app.models.demandes.demandes import DemandeBase
 
 class Client(Base):
     __tablename__ = "clients"
@@ -16,7 +16,7 @@ class Client(Base):
     sessions = relationship("Session", back_populates="client", cascade="all, delete-orphan")
     
     # Relation avec Demande (un client peut avoir plusieurs demandes)
-    demandes = relationship("Demande", back_populates="client", cascade="all, delete-orphan")
+    demandes = relationship("DemandeBase", back_populates="client", cascade="all, delete-orphan")
 
     __table_args__ = (
         UniqueConstraint('email', 'phone', name='unique_email_phone'),

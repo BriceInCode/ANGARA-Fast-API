@@ -87,7 +87,7 @@ class SessionService:
             sessions_grouped = {"actives": [], "expirées": [], "inactives": []}
             for session in sessions:
                 if session.is_active and session.expires_at > current_time:
-                    sessions_grouped["ac tives"].append(session)
+                    sessions_grouped["actives"].append(session)
                 elif session.expires_at <= current_time:
                     sessions_grouped["expirées"].append(session)
                 else:

@@ -1,6 +1,6 @@
-from enum import Enum as PyEnum
+from enum import Enum
 
-class DocumentEnum(PyEnum):
+class DocumentEnum(Enum):
     ACTE_NAISSANCE = "Acte de naissance"
     ACTE_MARIAGE = "Acte de mariage"
     ACTE_DECES = "Acte de décès"

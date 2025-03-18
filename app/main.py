@@ -15,6 +15,8 @@ from app.routes.utilisateurs.auth_routes import router as auth_router  # Importe
 from app.routes.utilisateurs.role_routes import router as role_router  # Importer la route pour les rôles
 from app.routes.utilisateurs.permission_routes import router as permission_router  # Importer la route pour les permissions
 from app.routes.utilisateurs.utilisateur_routes import router as utilisateur_router  # Importer la route pour les utilisateurs
+from app.routes.demandes.demande_routes import router as demande_routes  # Importer la route pour les utilisateurs
+from app.routes.demandes.motif_routes import router as motif_routes  # Importer la route pour les utilisateurs
 
 # Configuration du logger
 logging.basicConfig(
@@ -57,15 +59,17 @@ app.add_middleware(
 )
 
 # Inclusion des routes
-# app.include_router(client_router)
-# app.include_router(session_router)
-# app.include_router(otp_router)
-# app.include_router(organisation_router)
-# app.include_router(centre_etat_civil_router)
-# app.include_router(auth_router)  # Inclusion des routes d'authentification
-# app.include_router(role_router)  # Inclusion des routes pour les rôles
-# app.include_router(permission_router)  # Inclusion des routes pour les permissions
+app.include_router(client_router)
+app.include_router(session_router)
+app.include_router(otp_router)
+app.include_router(organisation_router)
+app.include_router(centre_etat_civil_router)
+app.include_router(auth_router)  # Inclusion des routes d'authentification
+app.include_router(role_router)  # Inclusion des routes pour les rôles
+app.include_router(permission_router)  # Inclusion des routes pour les permissions
 app.include_router(utilisateur_router)  # Inclusion des routes pour les utilisateurs
+app.include_router(demande_routes)  # Inclusion des routes pour les utilisateurs
+app.include_router(motif_routes)  # Inclusion des routes pour les utilisateurs
 
 # Endpoint racine
 @app.get("/", tags=["Root"])
