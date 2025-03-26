@@ -16,6 +16,7 @@ class OrganisationCreate(OrganisationBase):
 
 class OrganisationRead(OrganisationBase):
     id: int = Field(..., description="Identifiant unique de l'organisation")
+    cle_publique: datetime = Field(..., description="Clé d'api publique de l'organisation")
     created_at: datetime = Field(..., description="Date de création de l'organisation")
     updated_at: datetime = Field(..., description="Date de dernière mise à jour de l'organisation")
 
